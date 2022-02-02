@@ -148,6 +148,6 @@ Utilize ReactNative to convert the app to iOS and Android
 ## Authors
 
 Project authors:
-    Eliane Sacher
+    Elianne Sacher
     Ido Burstein
     Ty Geri
