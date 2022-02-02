@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Home Page
+{% endblock %}
+
+{% block main %}
+    <!-- Table of contacts with functionality buttons (email, refresh, contacted, copy to clipboard) -->
+    <div>
+    {% if contacts %}
+    <table class="table">
+        <thead>
+            <tr id="top">
+                <th>Name</th>
+                <th>Relationship Type</th>
+                <th>Last contact</th>
+                <th>Suggested Next Contact</th>
+                <th>Suggested Message</th>
+                <th>Severe Weather Alert</th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+        </thead>
+         <tbody id="theTable">
+             <!-- Loop through the contacts -->
+            {% for contact in contacts %}
+            <div>
+            <tr id ="{{ contact["id"] }}_row" style="background-color:#FFFFFF;" >
+
+                <!-- Name -->
+                <td>{{ contact["first"] }} {{ contact["last"] }}</td>
+
+                <!-- Relationship type -->
+                <td>{{ contact["relationship"] }}</td>
+
+                <!-- Last contact -->
+                <td>{{ contact["last_contact"] }}</td>
+
+                <!-- Next contact -->
+                <td>{{ contact["next_contact"] }}</td>
+
+
+                <!-- {% if contact["next_contact"] == contact["birthday"] %}-->
+                <!-- <td><div id ="{{ contact["id"] }}_next">{{ contact["next_contact"] }}<br> <i class="fa fa-birthday-cake" style="font-size:36px"></i></div></td> -->
+                <!--    <td><div id ="{{ contact["id"] }}_next">{{ contact["next_contact"] }}</div></td>-->
+                <!--{% else %}-->
+                <!--    <td><div id ="{{ contact["id"] }}_next">{{ contact["next_contact"] }}</div></td>-->
+                <!--{% endif %}-->
+
+                <!-- Suggested message -->
+                <td>
+                    <div id ="{{ contact["id"] }}">{{ contact["message"] }}</div>
+                </td>
+
+                <!-- Adds alert symbol if there is a severe weather alert in their state -->
+                {% if contact["state"] in alerts %}
+                    <td><div>🔴</div></td>
+                {% else %}
+                    <td><div></div></td>
+                {% endif %}
+
+                {% if contact["next_contact"] == contact["birthday"] %}
+                    <td><div id ="{{ contact["id"] }}_next"><i class="fa fa-birthday-cake" style="font-size:36px"></i></div></td>
+                {% else %}
+                    <td><div id ="{{ contact["id"] }}_next"></div></td>
+                {% endif %}
+
+                <!-- Button functions -->
+                <td>
+                    <div>
+                        <!-- Send mail -->
+                        <form action="/sendMail/" method="post">
+                        <button class="btn btn-primary" type="hidden" value="{{ contact["id"] }}" name='tag'><i class="fa fa-envelope"></i></button>
+                        </form>
+                    </div>
+                    &nbsp;
+                    <div>
+                        <!-- Button and JS function to copy to clipboard (code modified from W3Schools) -->
+                        <button class="btn btn-primary" type="hidden" onclick="clip_div({{ contact["id"] }})"><i class="fa fa-clipboard"></i></button>
+                        <script>
+                            function clip_text(a_string){
+                                var input = document.createElement('input')
+                                input.id="__copyText__";
+                                input.value = a_string; // OOPS! document.getElementById(divId).innerText;
+                                document.body.appendChild(input);
+                                input.select();
+                                document.execCommand("copy");
+                                var txt = input.value
+                                input.remove()
+                                console.log("OK COPIED: '"+txt+"'")
+                            }
+                            function clip_div(divId){
+                               return clip_text(document.getElementById(divId).innerText)
+                            }
+                        </script>
+                    </div>
+                </td>
+
+                <td>
+                    <!-- Update button -->
+                    <div>
+                        <form action="/update/" method="post">
+                        <button class="btn btn-primary" type="hidden" value="{{ contact["id"] }}" name='tag'> ✓ </button>
+                        </form>
+                    </div>
+                    &nbsp;
+                    <!-- New Message button -->
+                    <div>
+                        <form action="/newMessage/" method="post">
+                            <button class="btn btn-primary" type="hidden" value="{{ contact["id"] }}" name='tag'><i class="fa fa-refresh"></i></button>
+                        </form>
+                    </div>
+                </td>
+
+            </tr>
+
+            </div>
+            <!--JS functions to modify the dates to be more visually appealing -->
+            <script>
+                function changeDate(date)
+                {
+                    let currentDate = new Date(date);
+                    var fd = currentDate.toDateString();
+                    return fd;
+                }
+
+                // Function that changes the colour for next contact
+                $(function(){
+                  $("tr").each(function(){
+                    var col_val = $(this).find("td:eq(3)").text();
+                    var todayDate = new Date().toISOString().slice(0,10);
+                    if (col_val == todayDate)
+                    {
+                      $(this).find("td:eq(3)").addClass('today');  //the selected class colors the row green//
+                    }
+                    else if (col_val < todayDate)
+                    {
+                      $(this).find("td:eq(3)").addClass('late');
+                    }
+                  });
+                });
+
+                // Function that changes the date format for last and next contact
+                $(function(){
+                  $("tr").each(function(){
+                    var x = changeDate($(this).find("td:eq(2)").text());
+                    var list = x.slice(4).split(" ");
+                    if (Number(list[1]) < 10)
+                    {
+                        list[1] = list[1].slice(1)
+                    }
+                   list[1] = list[1] + ",";
+                    var date = list[0] + " " + list[1] + " " + list[2];
+                    $(this).find("td:eq(2)").html(date);
+                  });
+                  $("tr").each(function(){
+                    var x = changeDate($(this).find("td:eq(3)").text());
+                    var list = x.slice(4).split(" ");
+                    if (Number(list[1]) < 10)
+                    {
+                        list[1] = list[1].slice(1)
+                    }
+                    list[1] = list[1] + ",";
+                    var date = list[0] + " " + list[1] + " " + list[2];
+                    $(this).find("td:eq(3)").html(date);
+                  });
+                });
+            </script>
+
+            {% endfor %}
+        </tbody>
+    </table>
+    <!-- Message shown if the user has no contacts -->
+    {% else %}
+    <div class="message">
+        <h1> Welcome to Close from Afar - we are here to help you maintain and strengthen your relationships.</h1>
+        <h1 style="font-size:20px;"> You do not currently have any contacts. Click on the <i style="font-size:30px" class="fa">&#xf2ba;</i></a> icon to add contacts!</h1>
+    </div>
+    {% endif %}
+    </div>
+{% endblock %}
+
